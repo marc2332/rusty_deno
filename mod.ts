@@ -1,14 +1,10 @@
 
-type matchCase = string | number;
-
-type matchCases<T> = {
-    [key in matchCase]: (arg: T) => any;
-} & {
-    Some?: (arg:T) => any
-    None?: (arg: T) => any;
+interface matchCases<V,E> {
+    Some?: (arg:V) => any
+    None?: () => any;
+    Ok?: (arg: V) => any
+    Err?: (arg: E) => any;
 };
-
-const canBeNumber = (e: any) => Number(e).toString() == e
 
 export class Op<T> {
     val: T;
@@ -16,47 +12,20 @@ export class Op<T> {
         this.val = val;
     }
 
-    public unwrap(): T | null {
-        if(this.val != null){
-            return this.val
-        }else{
-            // panic
-            return null
-        }
+    public unwrap(): T {
+        return this.val
     }
 
-    public unwrap_or<R>(val: R): T | null | R {
+    public unwrap_or<R>(val: R): T | R {
         const ret = this.unwrap();
         if(ret != null) return ret
         else return val;
     }
 
-    public match(arg: any) {
-        return match(this)(arg);
-    }
-}
-
-function match<T = any>(val: T, prop?: string){
-    return (cases: matchCases<T>) => {
-        const casesKeys: any[] = Object.keys(cases);
-        const matchVal = prop ? (val as any)[prop] : val;
-
-        for(const key of casesKeys){
-            if(key === (matchVal) || (canBeNumber(key) && Number(key) == Number(matchVal))) {
-                return cases[key](val);
-            }
+    public match(cases: matchCases<T, null>) {
+        if(cases.Some && this.val != null){
+            return cases.Some(this.unwrap());
         }
-
-        if(val instanceof Op ){
-            if(matchVal != null && cases.Some){
-                return cases.Some(val.unwrap());
-            }
-        } else {
-            if(cases.None) {
-                return cases.None((val as unknown as None).unwrap());
-            }
-        }
-
     }
 }
 
@@ -66,7 +35,7 @@ export function Some<T>(v: T){
 
 export class None extends Op<any>{
     static val: any = null;
-    public static unwrap(): null {
+    public static unwrap(): any {
         return null
     }
 
@@ -74,12 +43,53 @@ export class None extends Op<any>{
         return val;
     }
 
-    public static match(arg: any) {
-        return match(this)(arg);
+    public static match(cases: matchCases<any, any>) {
+        if(cases.None){
+            return cases.None();
+        }
     }
 }
 
+export class Result<A,B>{
+    private readonly val: A;
+    private readonly error: B;
+    constructor(val: A, error: B) {
+        this.val = val;
+        this.error = error;
+    }
 
+    public unwrap(): A {
+        return this.val
+    }
+
+    public err(){
+        return this.error
+    }
+
+    public match(cases: matchCases<A, B>){
+        if(this.val != null){
+            if(cases.Ok){
+                return cases.Ok(this.unwrap());
+            }
+        } else if(cases.Err){
+            return cases.Err(this.err());
+        }
+
+    }
+
+    public unwrap_or(def: A): A {
+        if(this.val != null) return this.val;
+        else return def;
+    }
+}
+
+export function Ok<T>(v: T){
+    return new Result<T,any>(v, null);
+}
+
+export function Err<T>(e: T){
+    return new Result<any,T>(null, e);
+}
 
 
 

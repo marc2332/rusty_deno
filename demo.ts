@@ -1,4 +1,6 @@
-import { Op, Some, None } from './mod.ts'
+import { Op, Some, None, Ok, Err, Result } from './mod.ts'
+
+// Option
 
 const default_val = 60;
 
@@ -10,8 +12,28 @@ function test(status: number): Op<number> {
     }
 }
 
+
 const is_ok = test(202);
 
 const val = is_ok.unwrap_or(default_val);
 
 console.log(val)
+
+// Result
+
+function testB(status: number): Result<number, string> {
+    if(status == 100) {
+        return Ok(status)
+    } else {
+        return Err("Unhandled number");
+    }
+}
+
+const res = testB(100);
+
+console.log(res.unwrap_or(5));
+
+console.log(res.match({
+    Ok: (n) => `It's ${n}`,
+    Err: (e) => `F: ${e}`
+}));
