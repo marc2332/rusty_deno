@@ -37,3 +37,18 @@ console.log(res.match({
     Ok: (n) => `It's ${n}`,
     Err: (e) => `F: ${e}`
 }));
+
+async function async_func(): Promise<Result<number, string>> {
+    return Ok(1)
+}
+
+const async_val = await async_func()
+
+if(async_val.is_ok()) {
+    console.log(async_val.unwrap())
+} else {
+    console.log(async_val.err())
+}
+
+
+

@@ -58,6 +58,10 @@ export class Result<A,B>{
         this.error = error;
     }
 
+    public is_ok(): boolean {
+        return !!this.val
+    }
+
     public unwrap(): A {
         return this.val
     }
