@@ -4,12 +4,20 @@ interface matchCases<V,E> {
     None?: () => any;
     Ok?: (arg: V) => any
     Err?: (arg: E) => any;
-};
+}
 
 export class Op<T> {
     val: T;
     constructor(val: T) {
         this.val = val;
+    }
+
+    public is_some(): boolean {
+        return this.val !== null
+    }
+
+    public is_none(): boolean {
+        return this.val === null
     }
 
     public unwrap(): T {
@@ -48,6 +56,14 @@ export class None extends Op<any>{
             return cases.None();
         }
     }
+
+    public static is_some(): boolean {
+        return false;
+    }
+
+    public static is_none(): boolean {
+        return  true;
+    }
 }
 
 export class Result<A,B>{
@@ -59,7 +75,11 @@ export class Result<A,B>{
     }
 
     public is_ok(): boolean {
-        return !!this.val
+        return this.val !== null
+    }
+
+    public is_err(): boolean {
+        return this.val === null
     }
 
     public unwrap(): A {
